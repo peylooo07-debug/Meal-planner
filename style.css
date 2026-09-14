@@ -2,6 +2,7 @@
   --color-bg: #fdf8f2;
   --color-primary: #e8734a;
   --color-primary-dark: #c85a34;
+  --color-on-primary: #fffaf6;
   --color-text: #2f2a26;
   --color-muted: #7a6f66;
   --color-card: #ffffff;
@@ -9,6 +10,36 @@
   --color-ok: #2f9e44;
   --color-warning: #d9480f;
   --radius: 12px;
+  --font-display: "Fraunces", Georgia, "Times New Roman", serif;
+  --font-body: "Karla", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-bg: #211b17;
+    --color-primary: #f0895f;
+    --color-primary-dark: #f7a582;
+    --color-on-primary: #2b1710;
+    --color-text: #f2e9e1;
+    --color-muted: #b6a99c;
+    --color-card: #2b2420;
+    --color-border: #453b34;
+    --color-ok: #5cc274;
+    --color-warning: #ff8a5c;
+  }
+}
+
+:root[data-theme="dark"] {
+  --color-bg: #211b17;
+  --color-primary: #f0895f;
+  --color-primary-dark: #f7a582;
+  --color-on-primary: #2b1710;
+  --color-text: #f2e9e1;
+  --color-muted: #b6a99c;
+  --color-card: #2b2420;
+  --color-border: #453b34;
+  --color-ok: #5cc274;
+  --color-warning: #ff8a5c;
 }
 
 * {
@@ -17,7 +48,7 @@
 
 body {
   margin: 0;
-  font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--font-body);
   background: var(--color-bg);
   color: var(--color-text);
   line-height: 1.5;
@@ -25,14 +56,17 @@ body {
 
 .app-header {
   background: var(--color-primary);
-  color: white;
-  padding: 24px 16px;
+  color: var(--color-on-primary);
+  padding: 28px 16px;
   text-align: center;
 }
 
 .app-header h1 {
   margin: 0 0 4px;
-  font-size: 1.8rem;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 2rem;
+  text-wrap: balance;
 }
 
 .app-header p {
@@ -91,17 +125,25 @@ main {
   width: 100%;
   padding: 14px;
   background: var(--color-primary);
-  color: white;
+  color: var(--color-on-primary);
   border: none;
   border-radius: 8px;
+  font-family: var(--font-body);
   font-size: 1.05rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: background 0.15s ease;
 }
 
 .primary-button:hover {
   background: var(--color-primary-dark);
+}
+
+.primary-button:focus-visible,
+input:focus-visible,
+summary:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
 
 .results-section {
@@ -149,7 +191,9 @@ main {
 
 .recipe-card h4 {
   margin: 0 0 10px;
-  font-size: 1.1rem;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.2rem;
 }
 
 .tags {
@@ -163,16 +207,16 @@ main {
   font-size: 0.72rem;
   padding: 3px 8px;
   border-radius: 999px;
-  background: #f1ece4;
+  background: color-mix(in srgb, var(--color-text) 8%, var(--color-card));
   color: var(--color-text);
 }
 
-.tag.category-fleisch { background: #fbe3d8; }
-.tag.category-fisch { background: #d8ecfb; }
-.tag.category-vegetarisch { background: #e2f2d8; }
-.tag.category-vegan { background: #d8f2e6; }
-.tag.kid { background: #fff3c4; }
-.tag.allergen { background: #f3d8e6; }
+.tag.category-fleisch { background: color-mix(in srgb, #e8734a 22%, var(--color-card)); }
+.tag.category-fisch { background: color-mix(in srgb, #3d8fd6 22%, var(--color-card)); }
+.tag.category-vegetarisch { background: color-mix(in srgb, #4c9a3f 22%, var(--color-card)); }
+.tag.category-vegan { background: color-mix(in srgb, #29a37c 22%, var(--color-card)); }
+.tag.kid { background: color-mix(in srgb, #e8b800 24%, var(--color-card)); }
+.tag.allergen { background: color-mix(in srgb, #c74d8c 20%, var(--color-card)); }
 
 .meta {
   font-size: 0.85rem;
