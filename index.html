@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Familien-Wochenplaner</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="app-header">
+    <h1>🍽️ Familien-Wochenplaner</h1>
+    <p>Wochenplan und Einkaufsliste – passend für deine ganze Familie.</p>
+  </header>
+
+  <main>
+    <section class="form-section">
+      <form id="plan-form">
+        <div class="form-row">
+          <label for="personen">1. Wie viele Personen esst ihr?</label>
+          <input type="number" id="personen" min="1" max="12" value="4" required />
+        </div>
+
+        <div class="form-row">
+          <label for="budget">2. Budget für die ganze Woche (in €)</label>
+          <input type="number" id="budget" min="0" step="0.5" value="70" required />
+        </div>
+
+        <div class="form-row">
+          <span class="group-label">3a. Allergien / Unverträglichkeiten (werden komplett ausgeschlossen)</span>
+          <div class="checkbox-group">
+            <label><input type="checkbox" name="allergie" value="gluten" /> Gluten</label>
+            <label><input type="checkbox" name="allergie" value="laktose" /> Laktose</label>
+            <label><input type="checkbox" name="allergie" value="ei" /> Ei</label>
+            <label><input type="checkbox" name="allergie" value="nuesse" /> Nüsse</label>
+            <label><input type="checkbox" name="allergie" value="fisch" /> Fisch</label>
+            <label><input type="checkbox" name="allergie" value="soja" /> Soja</label>
+            <label><input type="checkbox" name="allergie" value="senf" /> Senf</label>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <span class="group-label">3b. Vorlieben (bevorzugte Gerichte-Art, Mehrfachauswahl möglich)</span>
+          <div class="checkbox-group">
+            <label><input type="checkbox" name="vorliebe" value="fleisch" /> Fleisch</label>
+            <label><input type="checkbox" name="vorliebe" value="fisch" /> Fisch</label>
+            <label><input type="checkbox" name="vorliebe" value="vegetarisch" /> Vegetarisch</label>
+            <label><input type="checkbox" name="vorliebe" value="vegan" /> Vegan</label>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label for="abneigungen">3c. Zutaten, die ihr nicht mögt (Komma-getrennt)</label>
+          <input type="text" id="abneigungen" placeholder="z. B. Pilze, Fisch, Rosenkohl" />
+        </div>
+
+        <div class="form-row">
+          <label for="zutaten">4. Zutaten, die ihr schon zuhause habt (Komma-getrennt)</label>
+          <input type="text" id="zutaten" placeholder="z. B. Reis, Kartoffeln, Käse" />
+        </div>
+
+        <button type="submit" class="primary-button">5. Wochenplan &amp; Einkaufsliste erstellen</button>
+      </form>
+    </section>
+
+    <section id="results-section" class="results-section">
+      <div id="plan-results" class="plan-results"></div>
+
+      <div class="shopping-section">
+        <h2>🛒 Einkaufsliste</h2>
+        <div id="shopping-results" class="shopping-results"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <p>Erste Version · lokale Rezept-Datenbank · keine Daten werden irgendwohin gesendet</p>
+  </footer>
+
+  <script src="data/recipes.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
