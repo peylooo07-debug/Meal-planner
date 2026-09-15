@@ -112,3 +112,11 @@ Weg, die Idee schnell testbar zu machen und als Anfänger jede Zeile Code
 zu verstehen. Sobald du mit den Grundlagen (Formular, Funktionen, DOM)
 vertraut bist, lässt sich die Logik aus `app.js` später fast unverändert
 in ein größeres Framework (z. B. React) übernehmen.
+
+## 🎮 Bonus: QuizFight – Duell der Köpfe
+
+Im Ordner [`quiz-duell/`](quiz-duell/README.md) liegt ein zweites,
+eigenständiges Projekt in diesem Repo: ein Quizduell-artiges Wissensspiel
+mit 250 Fragen speziell für ein junges Publikum (Gaming, Social Media,
+Serien, Musik, Nostalgie u.v.m.), Duell- und Solo-Modi, Jokern, Streaks
+und Achievements. Details dazu in der [README dort](quiz-duell/README.md).
