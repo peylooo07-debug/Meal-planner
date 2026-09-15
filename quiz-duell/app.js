@@ -586,9 +586,12 @@
     answersGrid.innerHTML = "";
     const letters = ["A", "B", "C", "D"];
     let answered = false;
-    const btns = q.options.map((opt, idx) => {
-      const b = el("button", "answer-btn", `<span class="opt-letter">${letters[idx]}</span><span>${opt}</span>`);
-      b.addEventListener("click", () => submitAnswer(idx));
+    const order = shuffleArr([0, 1, 2, 3]);
+    const posOfOrig = [];
+    order.forEach((origIdx, pos) => { posOfOrig[origIdx] = pos; });
+    const btns = order.map((origIdx, pos) => {
+      const b = el("button", "answer-btn", `<span class="opt-letter">${letters[pos]}</span><span>${q.options[origIdx]}</span>`);
+      b.addEventListener("click", () => submitAnswer(origIdx));
       answersGrid.appendChild(b);
       return b;
     });
@@ -605,7 +608,7 @@
       const available = player.jokers[jd.key];
       const b = el("button", "joker-btn", `<span class="joker-emoji">${jd.emoji}</span><span>${jd.label}</span>`);
       b.disabled = !available;
-      b.addEventListener("click", () => useJoker(jd.key, q, btns, player, b));
+      b.addEventListener("click", () => useJoker(jd.key, q, btns, player, b, posOfOrig));
       jr.appendChild(b);
     });
 
@@ -616,8 +619,8 @@
       btns.forEach(b => (b.disabled = true));
       const remaining = currentTimerCtrl.getRemaining();
       const isCorrect = idx === q.correct;
-      btns[q.correct].classList.add("correct");
-      if (!isCorrect && idx >= 0) btns[idx].classList.add("wrong");
+      btns[posOfOrig[q.correct]].classList.add("correct");
+      if (!isCorrect && idx >= 0) btns[posOfOrig[idx]].classList.add("wrong");
       finalizeAnswer(q, playerIndex, isCorrect, remaining, limit, idx, opts);
     }
 
@@ -633,7 +636,7 @@
     show("screen-question");
   }
 
-  function useJoker(key, q, btns, player, btnEl) {
+  function useJoker(key, q, btns, player, btnEl, posOfOrig) {
     if (!player.jokers[key]) return;
     player.jokers[key] = false;
     player.usedAnyJoker = true;
@@ -643,24 +646,33 @@
     else if (key === "fifty") {
       const wrongIdx = q.options.map((_, i) => i).filter(i => i !== q.correct);
       wrongIdx.sort(() => Math.random() - 0.5);
-      wrongIdx.slice(0, 2).forEach(i => { btns[i].classList.add("eliminated"); btns[i].disabled = true; });
+      wrongIdx.slice(0, 2).forEach(i => { btns[posOfOrig[i]].classList.add("eliminated"); btns[posOfOrig[i]].disabled = true; });
       toast("➗ Zwei falsche Antworten entfernt!");
     } else if (key === "audience") {
       let correctPct = 50 + Math.round(Math.random() * 35);
       const rest = 100 - correctPct;
-      const others = q.options.map((_, i) => i).filter(i => i !== q.correct && !btns[i].classList.contains("eliminated"));
+      const others = q.options.map((_, i) => i).filter(i => i !== q.correct && !btns[posOfOrig[i]].classList.contains("eliminated"));
       const shares = splitRandom(rest, others.length || 1);
       const panel = $("audience-panel");
       panel.hidden = false;
       panel.innerHTML = "";
-      q.options.forEach((opt, i) => {
-        if (btns[i].classList.contains("eliminated")) return;
+      const letters = ["A", "B", "C", "D"];
+      const orderedIdx = posOfOrig.map((pos, origIdx) => origIdx).sort((a, b) => posOfOrig[a] - posOfOrig[b]);
+      orderedIdx.forEach(i => {
+        if (btns[posOfOrig[i]].classList.contains("eliminated")) return;
         const pct = i === q.correct ? correctPct : shares.pop();
         const row = el("div", "audience-bar-row");
-        row.innerHTML = `<span>${["A","B","C","D"][i]}</span><div class="audience-bar-track"><div class="audience-bar-fill" style="width:${pct}%"></div></div><span class="audience-pct">${pct}%</span>`;
+        row.innerHTML = `<span>${letters[posOfOrig[i]]}</span><div class="audience-bar-track"><div class="audience-bar-fill" style="width:${pct}%"></div></div><span class="audience-pct">${pct}%</span>`;
         panel.appendChild(row);
       });
     }
+  }
+  function shuffleArr(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
   }
   function splitRandom(total, parts) {
     if (parts <= 0) return [];
