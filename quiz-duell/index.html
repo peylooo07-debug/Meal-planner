@@ -5,14 +5,25 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>QuizFight – Duell der Köpfe</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Inter:wght@400;500;600;700;800&display=swap" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" />
 <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="logoGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" class="lg-stop1" />
+      <stop offset="1" class="lg-stop2" />
+    </linearGradient>
+  </defs>
+</svg>
 <div id="app">
 
   <header class="topbar">
-    <div class="brand">🎮 <span>QuizFight</span></div>
+    <div class="brand">
+      <svg class="logo-mark" viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="14" fill="url(#logoGrad)" /><path d="M20 7 L13 27 H20 L17 41 L35 19 H26 L29 7 Z" fill="#fff" /></svg>
+      <span>QuizFight</span>
+    </div>
     <div class="topbar-right">
       <button id="btn-sound" class="icon-btn" title="Sound an/aus">🔊</button>
       <div id="profile-chip" class="profile-chip" hidden>
@@ -27,11 +38,27 @@
 
   <main id="screens">
 
+    <!-- SPLASH -->
+    <section class="screen" id="screen-splash">
+      <div class="splash-wrap">
+        <svg class="logo-mark logo-mark--lg" viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="14" fill="url(#logoGrad)" /><path d="M20 7 L13 27 H20 L17 41 L35 19 H26 L29 7 Z" fill="#fff" /></svg>
+        <h1 class="splash-title">QuizFight</h1>
+        <p class="splash-tag">Das Quiz-Duell für alle, die mehr wissen wollen als Quizduell fragt.</p>
+        <div class="splash-features">
+          <div class="splash-feature"><span class="sf-emoji">🎯</span><span>350 Fragen in 10 Kategorien – von leicht bis Experte</span></div>
+          <div class="splash-feature"><span class="sf-emoji">⚔️</span><span>Live-Duelle gegen Freunde oder eine smarte KI</span></div>
+          <div class="splash-feature"><span class="sf-emoji">🔥</span><span>Joker, Streaks, Kategorie-Sperren & Showdown-Runden</span></div>
+        </div>
+        <button class="btn btn-primary btn-block" id="btn-splash-start">Jetzt starten</button>
+      </div>
+    </section>
+
     <!-- ONBOARDING -->
     <section class="screen" id="screen-onboarding">
       <div class="card center-card">
-        <h1>Willkommen bei QuizFight! 🔥</h1>
-        <p class="muted">Duell der Köpfe – Gaming, Social Media, Serien, Musik &amp; mehr. Wähl deinen Namen und Avatar:</p>
+        <div class="step-dots"><span class="dot"></span><span class="dot active"></span></div>
+        <h1>Wer bist du? 👋</h1>
+        <p class="muted">Wähl deinen Namen und einen Avatar, dann kann's losgehen:</p>
         <input type="text" id="onboarding-name" maxlength="16" placeholder="Dein Name" />
         <div class="avatar-grid" id="onboarding-avatars"></div>
         <button class="btn btn-primary btn-block" id="btn-onboarding-start">Los geht's 🚀</button>
@@ -179,12 +206,14 @@
         <div class="summary-emoji" id="summary-emoji">🏆</div>
         <h1 id="summary-title">Spiel vorbei!</h1>
         <div class="summary-scores" id="summary-scores"></div>
+        <div class="level-up-banner" id="level-up-banner" hidden></div>
         <div class="summary-xp" id="summary-xp"></div>
         <div class="summary-achievements" id="summary-achievements"></div>
         <div class="summary-actions">
           <button class="btn btn-secondary" id="btn-summary-home">Zum Menü</button>
           <button class="btn btn-primary" id="btn-summary-again">Nochmal spielen</button>
         </div>
+        <button class="link-btn" id="btn-summary-share">📋 Ergebnis kopieren</button>
       </div>
     </section>
 

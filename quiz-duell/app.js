@@ -25,6 +25,12 @@
 
   function levelForXp(xp) { return 1 + Math.floor(xp / 250); }
   function xpIntoLevel(xp) { return xp - (levelForXp(xp) - 1) * 250; }
+  function addXp(xpGain) {
+    const before = levelForXp(profile.xp);
+    profile.xp += xpGain;
+    const after = levelForXp(profile.xp);
+    return { leveledUp: after > before, newLevel: after };
+  }
 
   const ACHIEVEMENTS = [
     { id: "first_match", emoji: "🎉", title: "Erste Schritte", desc: "Spiele dein erstes Match.", check: s => s.stats.gamesPlayed >= 1 },
@@ -109,7 +115,7 @@
     setTimeout(() => t.remove(), 2600);
   }
   function confettiBurst(n) {
-    const colors = ["#a855f7", "#ec4899", "#22d3ee", "#22c55e", "#f59e0b"];
+    const colors = ["#3d7fff", "#ff9f1c", "#2dd4bf", "#22c55e", "#f59e0b"];
     for (let i = 0; i < (n || 40); i++) {
       const p = el("div", "confetti-piece");
       p.style.left = Math.random() * 100 + "vw";
@@ -203,6 +209,13 @@
 
   function todayStr() { const d = new Date(); return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); }
   function yesterdayStr() { const d = new Date(); d.setDate(d.getDate() - 1); return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); }
+
+  // ================= SPLASH =================
+  $("btn-splash-start").addEventListener("click", () => {
+    ensureAudio(); sfx.click();
+    renderOnboardingAvatars();
+    show("screen-onboarding");
+  });
 
   // ================= ONBOARDING =================
   let onboardingAvatar = AVATARS[0];
@@ -399,13 +412,15 @@
     mergeSessionIntoProfile(M.players[0]);
     profile.stats.gamesPlayed++;
     const xpGain = Math.round(M.players[0].score / 15) + 15;
-    profile.xp += xpGain;
+    const xpResult = addXp(xpGain);
     const newAch = checkAchievements();
     saveProfile();
     showSummary({
       title: "Tages-Challenge geschafft!", emoji: "📅",
       scores: [{ name: profile.name, score: M.players[0].score, winner: true }],
-      xpGain, achievements: newAch, replay: () => { renderDailyIntro(); show("screen-daily-intro"); },
+      xpGain, leveledUp: xpResult.leveledUp, newLevel: xpResult.newLevel, achievements: newAch,
+      shareText: `📅 QuizFight Tages-Challenge: ${M.players[0].score} Punkte! Schaffst du mehr? 🔥`,
+      replay: () => { renderDailyIntro(); show("screen-daily-intro"); },
     });
   }
 
@@ -428,13 +443,15 @@
     const isPerfect = p.totalCount >= 6 && p.correctCount === p.totalCount;
     if (isPerfect) profile.stats.perfectGames++;
     const xpGain = Math.round(p.score / 20) + (isPerfect ? 20 : 0);
-    profile.xp += xpGain;
+    const xpResult = addXp(xpGain);
     const newAch = checkAchievements();
     saveProfile();
     showSummary({
       title: M.soloLives <= 0 ? "Game Over!" : "Training beendet!", emoji: M.soloLives <= 0 ? "💀" : "🎯",
       scores: [{ name: profile.name, score: p.score, winner: true }],
-      xpGain, achievements: newAch, replay: () => startSoloMatch(M.soloCategory, M.totalRounds),
+      xpGain, leveledUp: xpResult.leveledUp, newLevel: xpResult.newLevel, achievements: newAch,
+      shareText: `🎯 QuizFight Solo-Training: ${p.score} Punkte! Schaffst du mehr? 🔥`,
+      replay: () => startSoloMatch(M.soloCategory, M.totalRounds, M.difficultyMode),
     });
   }
 
@@ -639,7 +656,7 @@
     const isPerfect = p0.totalCount >= 6 && p0.correctCount === p0.totalCount;
     if (isPerfect) profile.stats.perfectGames++;
     const xpGain = Math.round(p0.score / 20) + (humanWon ? 30 : 5) + (isPerfect ? 20 : 0);
-    profile.xp += xpGain;
+    const xpResult = addXp(xpGain);
     const newAch = checkAchievements();
     saveProfile();
     if (humanWon) { confettiBurst(50); sfx.win(); }
@@ -650,7 +667,8 @@
         { name: p0.name + " " + p0.avatar, score: p0.score, winner: humanWon },
         { name: p1.name + " " + p1.avatar, score: p1.score, winner: !humanWon },
       ],
-      xpGain, achievements: newAch,
+      xpGain, leveledUp: xpResult.leveledUp, newLevel: xpResult.newLevel, achievements: newAch,
+      shareText: `⚔️ QuizFight-Duell: ${p0.name} ${p0.score} : ${p1.score} ${p1.name}. Wer gewinnt bei dir?`,
       replay: () => { pendingMode === "bot" ? renderDuellSetup("bot") : renderDuellSetup("pvp"); show("screen-duell-setup"); },
     });
   }
@@ -825,6 +843,9 @@
       sc.appendChild(item);
     });
     $("summary-xp").textContent = "+" + cfg.xpGain + " XP verdient · Level " + levelForXp(profile.xp);
+    const lvlBanner = $("level-up-banner");
+    if (cfg.leveledUp) { lvlBanner.hidden = false; lvlBanner.textContent = "🎉 Level " + cfg.newLevel + " erreicht!"; sfx.win(); }
+    else { lvlBanner.hidden = true; }
     const ach = $("summary-achievements");
     ach.innerHTML = "";
     (cfg.achievements || []).forEach(a => {
@@ -833,7 +854,16 @@
     });
     $("btn-summary-home").onclick = () => { renderHome(); show("screen-home"); };
     $("btn-summary-again").onclick = cfg.replay;
+    $("btn-summary-share").onclick = () => shareResult(cfg.shareText);
     show("screen-summary");
+  }
+
+  function shareResult(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => toast("📋 Ergebnis kopiert!")).catch(() => toast("Kopieren nicht möglich."));
+    } else {
+      toast("Kopieren wird von diesem Browser nicht unterstützt.");
+    }
   }
 
   function mergeSessionIntoProfile(player) {
@@ -894,5 +924,5 @@
   // ================= INIT =================
   updateSoundBtn();
   if (profile && profile.name) { renderHome(); show("screen-home"); }
-  else { renderOnboardingAvatars(); show("screen-onboarding"); }
+  else { show("screen-splash"); }
 })();

@@ -59,12 +59,26 @@ Doppelklick starten.
   irgendwohin gesendet.
 - Eigene Soundeffekte (per Web Audio erzeugt, keine externen Dateien)
   und ein Mute-Button oben rechts.
+- **🎉 Level-Up-Feier**: Ein eigener Banner auf dem Ergebnis-Screen,
+  wenn ein Match dich ins nächste Level bringt.
+- **📋 Ergebnis kopieren**: Ein Klick kopiert einen fertigen Teil-Text
+  mit deinem Score in die Zwischenablage (zum Teilen, Wordle-Style).
+
+## Design
+
+Ein zweistufiger Einstieg wie bei echten Apps: erst ein Splash-Screen
+mit Logo und Feature-Übersicht, dann die Profil-Erstellung (Name +
+Avatar) als zweiter Schritt. Farblich bewusst **kein Neon-Lila/Pink**
+mehr, sondern ein ruhigeres, dunkles "App"-Design mit Blau/Orange als
+Markenfarben, eigenem SVG-Logo (statt Emoji) und den Schriften Sora
+(Überschriften) + Inter (Text). Jede Kategorie hat trotzdem ihre eigene
+Akzentfarbe für Wiedererkennung.
 
 ## Projektstruktur
 
 ```
 index.html        # Alle Bildschirme (Screens) als HTML-Sections
-style.css         # Dunkles Neon-Design, mobile-first
+style.css         # Design (Farben, Typografie, Logo, Layout), mobile-first
 app.js            # Komplette Spiellogik (State Machine, Scoring, Jokers, Achievements)
 data/questions.js # 350 Fragen in 10 Kategorien (CATEGORIES + QUESTIONS)
 ```
