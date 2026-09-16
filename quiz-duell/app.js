@@ -98,6 +98,11 @@
     window.scrollTo(0, 0);
   }
   function el(tag, cls, html) { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; }
+  function makeCatTile(emoji, name, color, extraClass) {
+    const t = el("button", "cat-tile" + (extraClass ? " " + extraClass : ""), `<span class="cat-emoji">${emoji}</span><span>${name}</span>`);
+    t.style.setProperty("--cat-c", color);
+    return t;
+  }
   function toast(msg) {
     const t = el("div", "toast", msg);
     $("toast-container").appendChild(t);
@@ -261,11 +266,11 @@
   function renderSoloSetup() {
     const grid = $("solo-category-grid");
     grid.innerHTML = "";
-    const mixTile = el("button", "cat-tile" + (soloCategory === "mix" ? " selected" : ""), '<span class="cat-emoji">🔀</span><span>Mix</span>');
+    const mixTile = makeCatTile("🔀", "Mix", "var(--accent)", soloCategory === "mix" ? "selected" : "");
     mixTile.addEventListener("click", () => { soloCategory = "mix"; renderSoloSetup(); });
     grid.appendChild(mixTile);
     CATEGORIES.forEach(c => {
-      const t = el("button", "cat-tile" + (soloCategory === c.id ? " selected" : ""), `<span class="cat-emoji">${c.emoji}</span><span>${c.name}</span>`);
+      const t = makeCatTile(c.emoji, c.name, c.color, soloCategory === c.id ? "selected" : "");
       t.addEventListener("click", () => { soloCategory = c.id; renderSoloSetup(); });
       grid.appendChild(t);
     });
@@ -446,7 +451,7 @@
     grid.innerHTML = "";
     CATEGORIES.forEach(c => {
       const blocked = M.blockedCategories.includes(c.id);
-      const t = el("button", "cat-tile" + (blocked ? " blocked" : ""), `<span class="cat-emoji">${c.emoji}</span><span>${c.name}</span>`);
+      const t = makeCatTile(c.emoji, c.name, c.color, blocked ? "blocked" : "");
       t.disabled = blocked || player.isBot;
       if (!blocked && !player.isBot) t.addEventListener("click", () => confirmBlock(playerIndex, c.id));
       grid.appendChild(t);
@@ -497,7 +502,7 @@
       const blocked = M.blockedCategories.includes(c.id);
       const used = M.usedCategories.includes(c.id) && !M.isSuddenDeath;
       const unavailable = blocked || used;
-      const t = el("button", "cat-tile" + (blocked ? " blocked" : used ? " used" : ""), `<span class="cat-emoji">${c.emoji}</span><span>${c.name}</span>`);
+      const t = makeCatTile(c.emoji, c.name, c.color, blocked ? "blocked" : used ? "used" : "");
       if (!unavailable && !picker.isBot) t.addEventListener("click", () => choosePickCategory(c.id));
       t.disabled = unavailable || picker.isBot;
       grid.appendChild(t);
