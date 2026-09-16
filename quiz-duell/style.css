@@ -258,6 +258,8 @@ input[type="text"]:focus { outline: none; border-color: var(--primary); }
 .cat-tile.selected { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent) inset; }
 .cat-tile.used { opacity: 0.35; pointer-events: none; }
 .cat-tile.used::after { content: "✓"; position: absolute; top: 6px; right: 8px; color: var(--good); font-weight: 800; }
+.cat-tile.blocked { opacity: 0.35; pointer-events: none; border-color: var(--bad); }
+.cat-tile.blocked::after { content: "🚫"; position: absolute; top: 4px; right: 6px; font-size: 0.85rem; }
 
 .chip-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
 .chip {

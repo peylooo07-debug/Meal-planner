@@ -15,6 +15,11 @@
     { id: "medium", label: "Mittel 😐" },
     { id: "hard", label: "Schwer 😈" },
   ];
+  const QUESTION_DIFFICULTY_MODES = [
+    { id: "mixed", label: "Gemischt" },
+    { id: "hard", label: "Schwer 🔥" },
+    { id: "expert", label: "Experte 💀" },
+  ];
   const PROFILE_KEY = "quizfight_profile_v1";
   const MUTE_KEY = "quizfight_muted_v1";
 
@@ -141,9 +146,18 @@
     let pool = QUESTIONS.filter(q => q.cat === catId && !M.usedQuestionIds.has(q.id));
     if (!pool.length) pool = QUESTIONS.filter(q => !M.usedQuestionIds.has(q.id));
     if (!pool.length) { M.usedQuestionIds.clear(); pool = QUESTIONS.filter(q => q.cat === catId); if (!pool.length) pool = QUESTIONS.slice(); }
-    const progress = totalRounds > 1 ? roundIndex / (totalRounds - 1) : 1;
-    const maxDiff = Math.max(1, Math.ceil(progress * 4));
-    let filtered = pool.filter(q => q.diff <= maxDiff);
+
+    const mode = (M && M.difficultyMode) || "mixed";
+    let filtered;
+    if (mode === "expert") {
+      filtered = pool.filter(q => q.diff === 4);
+    } else if (mode === "hard") {
+      filtered = pool.filter(q => q.diff >= 3);
+    } else {
+      const progress = totalRounds > 1 ? roundIndex / (totalRounds - 1) : 1;
+      const minDiff = 1 + Math.floor(progress * 3); // steigt von 1 auf 4 im Laufe des Matches
+      filtered = pool.filter(q => q.diff >= minDiff);
+    }
     if (!filtered.length) filtered = pool;
     const q = filtered[Math.floor(Math.random() * filtered.length)];
     M.usedQuestionIds.add(q.id);
@@ -243,6 +257,7 @@
   // ================= SOLO SETUP =================
   let soloCategory = "mix";
   let soloLength = "standard";
+  let soloDifficulty = "mixed";
   function renderSoloSetup() {
     const grid = $("solo-category-grid");
     grid.innerHTML = "";
@@ -261,12 +276,20 @@
       c.addEventListener("click", () => { soloLength = o.id; renderSoloSetup(); });
       chips.appendChild(c);
     });
+    const diffChips = $("solo-difficulty-chips");
+    diffChips.innerHTML = "";
+    QUESTION_DIFFICULTY_MODES.forEach(o => {
+      const c = el("button", "chip" + (soloDifficulty === o.id ? " selected" : ""), o.label);
+      c.addEventListener("click", () => { soloDifficulty = o.id; renderSoloSetup(); });
+      diffChips.appendChild(c);
+    });
   }
-  $("btn-solo-start").addEventListener("click", () => { startSoloMatch(soloCategory, LENGTH_OPTIONS.find(o => o.id === soloLength).rounds); });
+  $("btn-solo-start").addEventListener("click", () => { startSoloMatch(soloCategory, LENGTH_OPTIONS.find(o => o.id === soloLength).rounds, soloDifficulty); });
 
   // ================= DUELL SETUP =================
   let duellLength = "standard";
   let botDifficulty = "medium";
+  let duellDifficulty = "mixed";
   function renderDuellSetup(mode) {
     $("duell-setup-title").textContent = mode === "bot" ? "🤖 Duell vs. Bot" : "⚔️ Duell (2 Spieler)";
     $("duell-player2-wrap").hidden = mode === "bot";
@@ -286,34 +309,42 @@
       c.addEventListener("click", () => { duellLength = o.id; renderDuellSetup(mode); });
       lc.appendChild(c);
     });
+    const diffChips = $("duell-difficulty-chips");
+    diffChips.innerHTML = "";
+    QUESTION_DIFFICULTY_MODES.forEach(o => {
+      const c = el("button", "chip" + (duellDifficulty === o.id ? " selected" : ""), o.label);
+      c.addEventListener("click", () => { duellDifficulty = o.id; renderDuellSetup(mode); });
+      diffChips.appendChild(c);
+    });
   }
   $("btn-duell-start").addEventListener("click", () => {
     const rounds = LENGTH_OPTIONS.find(o => o.id === duellLength).rounds;
-    if (pendingMode === "bot") startDuellMatch("bot", rounds, botDifficulty, null);
-    else startDuellMatch("pvp", rounds, null, ($("duell-player2-name").value.trim() || "Spieler 2").slice(0, 16));
+    if (pendingMode === "bot") startDuellMatch("bot", rounds, botDifficulty, null, duellDifficulty);
+    else startDuellMatch("pvp", rounds, null, ($("duell-player2-name").value.trim() || "Spieler 2").slice(0, 16), duellDifficulty);
   });
 
   // ================= START MATCHES =================
-  function startSoloMatch(catId, rounds) {
+  function startSoloMatch(catId, rounds, difficultyMode) {
     M = {
       mode: "solo", players: [newPlayer(profile.name, profile.avatar, false)],
       totalRounds: rounds, roundIndex: 0, usedQuestionIds: new Set(),
-      soloLives: 3, soloCategory: catId, session: { fastAnswers: 0, categoryStats: {} },
+      soloLives: 3, soloCategory: catId, difficultyMode: difficultyMode || "mixed",
+      session: { fastAnswers: 0, categoryStats: {} },
     };
     nextSoloQuestion();
   }
 
-  function startDuellMatch(kind, rounds, botDiff, player2Name) {
+  function startDuellMatch(kind, rounds, botDiff, player2Name, difficultyMode) {
     const p0 = newPlayer(profile.name, profile.avatar, false);
     const p1 = kind === "bot" ? newPlayer("Bot", "🤖", true) : newPlayer(player2Name, pickOtherAvatar(), false);
     M = {
-      mode: kind, players: [p0, p1], botDifficulty: botDiff,
+      mode: kind, players: [p0, p1], botDifficulty: botDiff, difficultyMode: difficultyMode || "mixed",
       totalRounds: rounds, roundsPlayed: 0, usedQuestionIds: new Set(),
-      usedCategories: [],
+      usedCategories: [], blockedCategories: [],
       pickerIndex: 0, isSuddenDeath: false,
       session: { fastAnswers: 0, categoryStats: {} },
     };
-    showBoard();
+    startCategoryBlockPhase();
   }
 
   function pickOtherAvatar() { const opts = AVATARS.filter(a => a !== profile.avatar); return opts[Math.floor(Math.random() * opts.length)]; }
@@ -403,6 +434,51 @@
   }
 
   // ================= DUELL FLOW (pvp / bot) =================
+  function startCategoryBlockPhase() {
+    M.blockedCategories = [];
+    showCategoryBlockScreen(0);
+  }
+
+  function showCategoryBlockScreen(playerIndex) {
+    const player = M.players[playerIndex];
+    $("block-turn-banner").textContent = player.isBot ? "🤖 Bot sperrt eine Kategorie für dich..." : `${player.name}: Sperre eine Kategorie für den Gegner!`;
+    const grid = $("block-category-grid");
+    grid.innerHTML = "";
+    CATEGORIES.forEach(c => {
+      const blocked = M.blockedCategories.includes(c.id);
+      const t = el("button", "cat-tile" + (blocked ? " blocked" : ""), `<span class="cat-emoji">${c.emoji}</span><span>${c.name}</span>`);
+      t.disabled = blocked || player.isBot;
+      if (!blocked && !player.isBot) t.addEventListener("click", () => confirmBlock(playerIndex, c.id));
+      grid.appendChild(t);
+    });
+    show("screen-category-block");
+
+    if (player.isBot) {
+      setTimeout(() => {
+        const avail = CATEGORIES.map(c => c.id).filter(id => !M.blockedCategories.includes(id));
+        const chosen = avail[Math.floor(Math.random() * avail.length)];
+        toast("🤖 Bot sperrt: " + CATEGORIES.find(c => c.id === chosen).name);
+        setTimeout(() => confirmBlock(playerIndex, chosen), 700);
+      }, 800);
+    }
+  }
+
+  function confirmBlock(playerIndex, catId) {
+    M.blockedCategories.push(catId);
+    sfx.click();
+    if (playerIndex === 0) {
+      if (M.players[1].isBot) showCategoryBlockScreen(1);
+      else showPassDevice(M.players[1].name, () => showCategoryBlockScreen(1));
+    } else {
+      toast("🚫 Gesperrt: " + M.blockedCategories.map(id => CATEGORIES.find(c => c.id === id).name).join(" & "));
+      showBoard();
+    }
+  }
+
+  function isDuellShowdownRound() {
+    return (M.mode === "pvp" || M.mode === "bot") && !M.isSuddenDeath && M.roundsPlayed === M.totalRounds - 1;
+  }
+
   function showBoard() {
     const sb = $("board-scoreboard");
     sb.innerHTML = "";
@@ -412,22 +488,25 @@
       sb.appendChild(pill);
     });
     const picker = M.players[M.pickerIndex];
-    $("board-turn-banner").textContent = M.isSuddenDeath ? "⚡ SUDDEN DEATH – Entscheidungsfrage!" : (picker.isBot ? "🤖 Bot wählt eine Kategorie..." : `${picker.name} ist dran – wähle eine Kategorie!`);
+    const showdownNote = isDuellShowdownRound() ? " 🔥 SHOWDOWN – doppelte Punkte!" : "";
+    $("board-turn-banner").textContent = (M.isSuddenDeath ? "⚡ SUDDEN DEATH – Entscheidungsfrage!" : (picker.isBot ? "🤖 Bot wählt eine Kategorie..." : `${picker.name} ist dran – wähle eine Kategorie!`)) + showdownNote;
 
     const grid = $("board-category-grid");
     grid.innerHTML = "";
     CATEGORIES.forEach(c => {
+      const blocked = M.blockedCategories.includes(c.id);
       const used = M.usedCategories.includes(c.id) && !M.isSuddenDeath;
-      const t = el("button", "cat-tile" + (used ? " used" : ""), `<span class="cat-emoji">${c.emoji}</span><span>${c.name}</span>`);
-      if (!used && !picker.isBot) t.addEventListener("click", () => choosePickCategory(c.id));
-      t.disabled = used || picker.isBot;
+      const unavailable = blocked || used;
+      const t = el("button", "cat-tile" + (blocked ? " blocked" : used ? " used" : ""), `<span class="cat-emoji">${c.emoji}</span><span>${c.name}</span>`);
+      if (!unavailable && !picker.isBot) t.addEventListener("click", () => choosePickCategory(c.id));
+      t.disabled = unavailable || picker.isBot;
       grid.appendChild(t);
     });
     show("screen-board");
 
     if (picker.isBot) {
       setTimeout(() => {
-        const avail = CATEGORIES.map(c => c.id).filter(id => M.isSuddenDeath || !M.usedCategories.includes(id));
+        const avail = CATEGORIES.map(c => c.id).filter(id => !M.blockedCategories.includes(id) && (M.isSuddenDeath || !M.usedCategories.includes(id)));
         const chosen = avail[Math.floor(Math.random() * avail.length)];
         toast("🤖 Bot wählt: " + CATEGORIES.find(c => c.id === chosen).name);
         setTimeout(() => choosePickCategory(chosen), 700);
@@ -437,6 +516,7 @@
 
   function choosePickCategory(catId) {
     if (!M.isSuddenDeath) M.usedCategories.push(catId);
+    M.wasShowdownRound = isDuellShowdownRound();
     const q = pickQuestion(catId, M.roundsPlayed, M.totalRounds);
     M.currentRoundQuestion = q;
     M.roundResults = [];
@@ -488,6 +568,7 @@
     if (isCorrect) {
       player.streak++; player.bestStreak = Math.max(player.bestStreak, player.streak);
       scoreInfo = computeScore(q, remaining, limit, player.streak);
+      if (isDuellShowdownRound()) scoreInfo.pts *= 2;
       player.score += scoreInfo.pts; player.correctCount++;
     } else { player.streak = 0; }
     player.totalCount++;
@@ -511,6 +592,7 @@
     $("reveal-fact").textContent = q.fact || "";
     let pointsHtml = `<div>${p0.avatar} ${p0.name}: ${r0.correct ? "✅ +" + r0.pts : "❌ +0"}</div>`;
     pointsHtml += `<div>${p1.avatar} ${p1.name}: ${r1.correct ? "✅ +" + r1.pts : "❌ +0"}</div>`;
+    if (M.wasShowdownRound) pointsHtml += `<div>🔥 Showdown-Runde – Punkte verdoppelt!</div>`;
     $("reveal-points").innerHTML = pointsHtml;
     (r0.correct || r1.correct) ? sfx.correct() : sfx.wrong();
     $("btn-reveal-continue").onclick = () => { sfx.click(); afterDuellReveal(); };
@@ -527,7 +609,7 @@
       return;
     }
     M.pickerIndex = 1 - M.pickerIndex;
-    const boardExhausted = M.usedCategories.length >= CATEGORIES.length;
+    const boardExhausted = M.usedCategories.length >= (CATEGORIES.length - M.blockedCategories.length);
     if (M.roundsPlayed >= M.totalRounds || boardExhausted) {
       const p0 = M.players[0], p1 = M.players[1];
       if (p0.score === p1.score) {
@@ -688,6 +770,7 @@
     if (isCorrect) {
       player.streak++; player.bestStreak = Math.max(player.bestStreak, player.streak);
       scoreInfo = computeScore(q, remaining, limit, player.streak);
+      if ((M.mode === "pvp" || M.mode === "bot") && isDuellShowdownRound()) scoreInfo.pts *= 2;
       player.score += scoreInfo.pts;
       player.correctCount++;
       sfx.correct();
