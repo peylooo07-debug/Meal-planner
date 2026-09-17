@@ -2,7 +2,7 @@
   "use strict";
 
   // ================= CONSTANTS =================
-  const AVATARS = ["🙂","😎","🤩","🥳","😈","🤖","👽","🦊","🐱","🐼","🦁","🐸","🐧","🦄","👾","🎮","🔥","⚡","🌟","💀","🍕","🎧"];
+  const AVATAR_PALETTE = ["#3d7fff", "#f43f5e", "#f59e0b", "#10b981", "#2dd4bf", "#84cc16", "#eab308", "#f97316", "#6366f1", "#ef4444"];
   const TIME_BY_DIFF = { 1: 14, 2: 17, 3: 20, 4: 24 };
   const DIFF_LABEL = { 1: "★ Leicht", 2: "★★ Mittel", 3: "★★★ Schwer", 4: "★★★★ Experte" };
   const LENGTH_OPTIONS = [
@@ -50,7 +50,7 @@
   // ================= PROFILE / STORAGE =================
   function defaultProfile() {
     return {
-      name: "", avatar: "🙂", xp: 0,
+      name: "", xp: 0,
       daily: { lastDate: null, streak: 0, bestStreak: 0 },
       achievementsUnlocked: [],
       stats: { gamesPlayed: 0, wins: 0, perfectGames: 0, fastAnswers: 0, bestStreak: 0, jokerlessWins: 0, suddenDeathWins: 0, categoryStats: {} },
@@ -109,6 +109,20 @@
     t.style.setProperty("--cat-c", color);
     return t;
   }
+
+  function avatarColorFor(name) {
+    const s = (name || "?").trim() || "?";
+    let hash = 0;
+    for (let i = 0; i < s.length; i++) hash = (hash * 31 + s.charCodeAt(i)) | 0;
+    return AVATAR_PALETTE[Math.abs(hash) % AVATAR_PALETTE.length];
+  }
+  function avatarInitial(name) {
+    const s = (name || "").trim();
+    return s ? s.charAt(0).toUpperCase() : "?";
+  }
+  function avatarHTML(name, sizeClass) {
+    return `<span class="avatar-initial${sizeClass ? " " + sizeClass : ""}" style="background:${avatarColorFor(name)}">${avatarInitial(name)}</span>`;
+  }
   function toast(msg) {
     const t = el("div", "toast", msg);
     $("toast-container").appendChild(t);
@@ -149,8 +163,8 @@
   // ================= MATCH STATE =================
   let M = null; // active match
 
-  function newPlayer(name, avatar, isBot) {
-    return { name, avatar: avatar || "🤖", isBot: !!isBot, score: 0, streak: 0, bestStreak: 0, correctCount: 0, totalCount: 0, jokers: { fifty: true, audience: true, freeze: true }, usedAnyJoker: false };
+  function newPlayer(name, isBot) {
+    return { name, isBot: !!isBot, score: 0, streak: 0, bestStreak: 0, correctCount: 0, totalCount: 0, jokers: { fifty: true, audience: true, freeze: true }, usedAnyJoker: false };
   }
 
   function pickQuestion(catId, roundIndex, totalRounds) {
@@ -190,13 +204,13 @@
   function renderProfileChip() {
     if (!profile || !profile.name) { $("profile-chip").hidden = true; return; }
     $("profile-chip").hidden = false;
-    $("chip-avatar").textContent = profile.avatar;
+    $("chip-avatar").innerHTML = avatarHTML(profile.name);
     $("chip-name").textContent = profile.name;
     $("chip-level").textContent = "Lvl " + levelForXp(profile.xp);
   }
 
   function renderHome() {
-    $("home-avatar").textContent = profile.avatar;
+    $("home-avatar").innerHTML = avatarHTML(profile.name);
     $("home-name").textContent = profile.name;
     const lvl = levelForXp(profile.xp);
     $("home-level-label").textContent = "Level " + lvl;
@@ -213,37 +227,33 @@
   // ================= SPLASH =================
   $("btn-splash-start").addEventListener("click", () => {
     ensureAudio(); sfx.click();
-    renderOnboardingAvatars();
+    updateOnboardingPreview();
     show("screen-onboarding");
   });
 
   // ================= ONBOARDING =================
-  let onboardingAvatar = AVATARS[0];
-  function renderOnboardingAvatars() {
-    const grid = $("onboarding-avatars");
-    grid.innerHTML = "";
-    AVATARS.forEach(a => {
-      const b = el("button", "avatar-option" + (a === onboardingAvatar ? " selected" : ""), a);
-      b.addEventListener("click", () => { onboardingAvatar = a; renderOnboardingAvatars(); });
-      grid.appendChild(b);
-    });
+  function updateOnboardingPreview() {
+    const name = $("onboarding-name").value.trim();
+    $("onboarding-avatar-preview").innerHTML = avatarHTML(name || "?");
+    $("onboarding-name-error").hidden = true;
   }
+  $("onboarding-name").addEventListener("input", updateOnboardingPreview);
 
   $("btn-onboarding-start").addEventListener("click", () => {
     ensureAudio();
-    const name = $("onboarding-name").value.trim() || "Spieler";
+    const name = $("onboarding-name").value.trim();
+    if (!name) { $("onboarding-name-error").hidden = false; $("onboarding-name").focus(); return; }
     profile = defaultProfile();
     profile.name = name.slice(0, 16);
-    profile.avatar = onboardingAvatar;
     saveProfile();
+    sfx.win();
     renderHome();
     show("screen-home");
   });
 
   $("btn-edit-profile").addEventListener("click", () => {
     $("onboarding-name").value = profile.name;
-    onboardingAvatar = profile.avatar;
-    renderOnboardingAvatars();
+    updateOnboardingPreview();
     show("screen-onboarding");
   });
 
@@ -344,7 +354,7 @@
   // ================= START MATCHES =================
   function startSoloMatch(catId, rounds, difficultyMode) {
     M = {
-      mode: "solo", players: [newPlayer(profile.name, profile.avatar, false)],
+      mode: "solo", players: [newPlayer(profile.name, false)],
       totalRounds: rounds, roundIndex: 0, usedQuestionIds: new Set(),
       soloLives: 3, soloCategory: catId, difficultyMode: difficultyMode || "mixed",
       session: { fastAnswers: 0, categoryStats: {} },
@@ -353,8 +363,8 @@
   }
 
   function startDuellMatch(kind, rounds, botDiff, player2Name, difficultyMode) {
-    const p0 = newPlayer(profile.name, profile.avatar, false);
-    const p1 = kind === "bot" ? newPlayer("Bot", "🤖", true) : newPlayer(player2Name, pickOtherAvatar(), false);
+    const p0 = newPlayer(profile.name, false);
+    const p1 = kind === "bot" ? newPlayer("Bot", true) : newPlayer(player2Name, false);
     M = {
       mode: kind, players: [p0, p1], botDifficulty: botDiff, difficultyMode: difficultyMode || "mixed",
       totalRounds: rounds, roundsPlayed: 0, usedQuestionIds: new Set(),
@@ -364,8 +374,6 @@
     };
     startCategoryBlockPhase();
   }
-
-  function pickOtherAvatar() { const opts = AVATARS.filter(a => a !== profile.avatar); return opts[Math.floor(Math.random() * opts.length)]; }
 
   // ================= DAILY =================
   function seededRandom(seed) { let s = seed % 2147483647; if (s <= 0) s += 2147483646; return () => (s = (s * 16807) % 2147483647) / 2147483647; }
@@ -386,7 +394,7 @@
     const shuffled = QUESTIONS.slice().sort(() => rand() - 0.5);
     const dailyQs = shuffled.slice(0, 5);
     M = {
-      mode: "daily", players: [newPlayer(profile.name, profile.avatar, false)],
+      mode: "daily", players: [newPlayer(profile.name, false)],
       totalRounds: 5, roundIndex: 0, usedQuestionIds: new Set(),
       dailyQuestions: dailyQs, session: { fastAnswers: 0, categoryStats: {} },
     };
@@ -506,7 +514,7 @@
     sb.innerHTML = "";
     M.players.forEach((p, i) => {
       const pill = el("div", "score-pill" + (M.pickerIndex === i ? " active" : ""));
-      pill.innerHTML = `<div class="sp-name">${p.avatar} ${p.name}</div><div class="sp-score">${p.score}</div>`;
+      pill.innerHTML = `<div class="sp-name">${avatarHTML(p.name, "avatar-initial--xs")} ${p.name}</div><div class="sp-score">${p.score}</div>`;
       sb.appendChild(pill);
     });
     const picker = M.players[M.pickerIndex];
@@ -612,8 +620,8 @@
     $("reveal-title").textContent = "Runde beendet!";
     $("reveal-answer").textContent = "Richtige Antwort: " + q.options[q.correct];
     $("reveal-fact").textContent = q.fact || "";
-    let pointsHtml = `<div>${p0.avatar} ${p0.name}: ${r0.correct ? "✅ +" + r0.pts : "❌ +0"}</div>`;
-    pointsHtml += `<div>${p1.avatar} ${p1.name}: ${r1.correct ? "✅ +" + r1.pts : "❌ +0"}</div>`;
+    let pointsHtml = `<div>${avatarHTML(p0.name, "avatar-initial--xs")} ${p0.name}: ${r0.correct ? "✅ +" + r0.pts : "❌ +0"}</div>`;
+    pointsHtml += `<div>${avatarHTML(p1.name, "avatar-initial--xs")} ${p1.name}: ${r1.correct ? "✅ +" + r1.pts : "❌ +0"}</div>`;
     if (M.wasShowdownRound) pointsHtml += `<div>🔥 Showdown-Runde – Punkte verdoppelt!</div>`;
     $("reveal-points").innerHTML = pointsHtml;
     (r0.correct || r1.correct) ? sfx.correct() : sfx.wrong();
@@ -664,8 +672,8 @@
       title: humanWon ? "Du hast gewonnen! 🎉" : (p0.score === p1.score ? "Unentschieden!" : p1.name + " gewinnt!"),
       emoji: humanWon ? "🏆" : "🤝",
       scores: [
-        { name: p0.name + " " + p0.avatar, score: p0.score, winner: humanWon },
-        { name: p1.name + " " + p1.avatar, score: p1.score, winner: !humanWon },
+        { name: p0.name, score: p0.score, winner: humanWon },
+        { name: p1.name, score: p1.score, winner: !humanWon },
       ],
       xpGain, leveledUp: xpResult.leveledUp, newLevel: xpResult.newLevel, achievements: newAch,
       shareText: `⚔️ QuizFight-Duell: ${p0.name} ${p0.score} : ${p1.score} ${p1.name}. Wer gewinnt bei dir?`,
@@ -681,7 +689,7 @@
     const cat = CATEGORIES.find(c => c.id === q.cat);
     $("q-cat-badge").textContent = cat.emoji + " " + cat.name;
     $("q-diff-badge").textContent = DIFF_LABEL[q.diff];
-    $("q-player-badge").textContent = opts.showBadgePlayer ? (player.avatar + " " + player.name) : (opts.extraInfo || "");
+    $("q-player-badge").innerHTML = opts.showBadgePlayer ? (avatarHTML(player.name, "avatar-initial--xs") + " " + player.name) : (opts.extraInfo || "");
     $("q-player-badge").style.visibility = (opts.showBadgePlayer || opts.extraInfo) ? "visible" : "hidden";
     $("question-text").textContent = q.q;
     $("audience-panel").hidden = true;
@@ -839,7 +847,7 @@
     sc.innerHTML = "";
     cfg.scores.forEach(s => {
       const item = el("div", "summary-score-item" + (s.winner ? " winner" : ""));
-      item.innerHTML = `<div class="ssi-name">${s.name}</div><div class="ssi-score">${s.score}</div>`;
+      item.innerHTML = `<div class="ssi-name">${avatarHTML(s.name, "avatar-initial--xs")} ${s.name}</div><div class="ssi-score">${s.score}</div>`;
       sc.appendChild(item);
     });
     $("summary-xp").textContent = "+" + cfg.xpGain + " XP verdient · Level " + levelForXp(profile.xp);

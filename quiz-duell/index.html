@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#0a0c10" />
 <title>QuizFight – Duell der Köpfe</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" />
@@ -45,7 +46,7 @@
         <h1 class="splash-title">QuizFight</h1>
         <p class="splash-tag">Das Quiz-Duell für alle, die mehr wissen wollen als Quizduell fragt.</p>
         <div class="splash-features">
-          <div class="splash-feature"><span class="sf-emoji">🎯</span><span>350 Fragen in 10 Kategorien – von leicht bis Experte</span></div>
+          <div class="splash-feature"><span class="sf-emoji">🎯</span><span>385 Fragen in 11 Kategorien – von leicht bis Experte</span></div>
           <div class="splash-feature"><span class="sf-emoji">⚔️</span><span>Live-Duelle gegen Freunde oder eine smarte KI</span></div>
           <div class="splash-feature"><span class="sf-emoji">🔥</span><span>Joker, Streaks, Kategorie-Sperren & Showdown-Runden</span></div>
         </div>
@@ -57,11 +58,13 @@
     <section class="screen" id="screen-onboarding">
       <div class="card center-card">
         <div class="step-dots"><span class="dot"></span><span class="dot active"></span></div>
-        <h1>Wer bist du? 👋</h1>
-        <p class="muted">Wähl deinen Namen und einen Avatar, dann kann's losgehen:</p>
-        <input type="text" id="onboarding-name" maxlength="16" placeholder="Dein Name" />
-        <div class="avatar-grid" id="onboarding-avatars"></div>
+        <div class="onboarding-avatar-preview" id="onboarding-avatar-preview"></div>
+        <h1>Wie heißt du?</h1>
+        <p class="muted">Dein Name reicht völlig – dein Profil ist damit startklar.</p>
+        <input type="text" id="onboarding-name" maxlength="16" placeholder="Dein Name" autocomplete="given-name" />
+        <p class="field-error" id="onboarding-name-error" hidden>Bitte gib einen Namen ein.</p>
         <button class="btn btn-primary btn-block" id="btn-onboarding-start">Los geht's 🚀</button>
+        <p class="muted small trust-note">🔒 Keine Registrierung, kein Server – alles bleibt nur auf diesem Gerät.</p>
       </div>
     </section>
 

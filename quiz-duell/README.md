@@ -2,10 +2,10 @@
 
 Ein Quizduell-artiges Wissensspiel, komplett neu gedacht für ein junges
 Publikum (ca. 15–25 Jahre): Gaming, Social Media, Serien & Streaming,
-Musik, Sport, krasses Wissen, Geo, Pop-/Viral-Momente, Alltag/Lifestyle
-und 2000er/2010er-Nostalgie – **350 handgeschriebene Fragen** in vier
-Schwierigkeitsstufen (viele davon bewusst richtig schwer/Experten-Niveau),
-kein Framework, kein Server nötig.
+Musik, Sport, krasses Wissen, Geo, Pop-/Viral-Momente, Alltag/Lifestyle,
+2000er/2010er-Nostalgie und Politik & Weltgeschehen – **385 handgeschriebene
+Fragen** in vier Schwierigkeitsstufen (viele davon bewusst richtig
+schwer/Experten-Niveau), kein Framework, kein Server nötig.
 
 ## Starten
 
@@ -67,11 +67,14 @@ Doppelklick starten.
 ## Design
 
 Ein zweistufiger Einstieg wie bei echten Apps: erst ein Splash-Screen
-mit Logo und Feature-Übersicht, dann die Profil-Erstellung (Name +
-Avatar) als zweiter Schritt. Farblich bewusst **kein Neon-Lila/Pink**
-mehr, sondern ein ruhigeres, dunkles "App"-Design mit Blau/Orange als
-Markenfarben, eigenem SVG-Logo (statt Emoji) und den Schriften Sora
-(Überschriften) + Inter (Text). Jede Kategorie hat trotzdem ihre eigene
+mit Logo und Feature-Übersicht, dann die Profil-Erstellung als zweiter
+Schritt – dafür reicht ein Name, kein Sticker/Avatar zum Aussuchen.
+Jede*r bekommt automatisch einen Initialen-Avatar in einer aus dem
+Namen abgeleiteten Farbe (wie bei Slack, Notion & Co.). Farblich bewusst
+**kein Neon-Lila/Pink** mehr, sondern ein ruhigeres, dunkles "App"-Design
+mit Blau/Orange als Markenfarben, eigenem SVG-Logo (statt Emoji), den
+Schriften Sora (Überschriften) + Inter (Text) und einer blurred/sticky
+Titelleiste wie in nativen Apps. Jede Kategorie hat trotzdem ihre eigene
 Akzentfarbe für Wiedererkennung.
 
 ## Projektstruktur
@@ -80,7 +83,7 @@ Akzentfarbe für Wiedererkennung.
 index.html        # Alle Bildschirme (Screens) als HTML-Sections
 style.css         # Design (Farben, Typografie, Logo, Layout), mobile-first
 app.js            # Komplette Spiellogik (State Machine, Scoring, Jokers, Achievements)
-data/questions.js # 350 Fragen in 10 Kategorien (CATEGORIES + QUESTIONS)
+data/questions.js # 385 Fragen in 11 Kategorien (CATEGORIES + QUESTIONS)
 ```
 
 ## Eigene Fragen ergänzen
